@@ -1,2 +1,2 @@
-# tcp-server
-ex3 introduction to computer network
+### tcp-server
+Ex3 - introduction to computer network
