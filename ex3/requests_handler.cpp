@@ -104,10 +104,10 @@ string getFileName(string language){
 	return fileName;
 }
 
-
 string get_full_path(string fileName) {
 	char buff[FILENAME_MAX]; //create string buffer to hold path
 	GetCurrentDir(buff, FILENAME_MAX);
 	string current_working_dir(buff);
 	return current_working_dir + "\\" + fileName;
 }
+
