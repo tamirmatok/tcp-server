@@ -11,6 +11,7 @@ using namespace std;
 
 #define BUFFER_SIZE  4096
 #define MAX_SOCKETS  60
+#define SOCKER_TIMEOUT 120
 
 typedef struct Recv_headers
 {
@@ -36,6 +37,7 @@ struct SocketState
 	char buffer[BUFFER_SIZE];
 	int len;
 	Recv_headers headers;
+	clock_t time_of_last_byte;
 };
 
 #include "requests_handler.h"
@@ -58,3 +60,4 @@ void removeSocket(int index);
 void acceptConnection(int index);
 void receiveMessage(int index);
 void sendMessage(int index);
+void socketTimeoutHandler();

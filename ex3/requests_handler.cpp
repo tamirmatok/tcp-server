@@ -26,9 +26,10 @@ string requestHandler(Recv_headers& msg_headers)
 	//else if (requestType == "HEAD") {
 
 	//}
-	//else if (requestType == "OPTIONS") {
-
-	//}
+	else if (requestType == "OPTIONS") {
+		//TODO: make sure body {}
+		createResponse(RESPONSE_OK, "text/html", "0", "", true);
+	}
 	//else if (requestType == "PUT") {
 
 	//}
@@ -104,10 +105,10 @@ string getFileName(string language){
 	return fileName;
 }
 
-
 string get_full_path(string fileName) {
 	char buff[FILENAME_MAX]; //create string buffer to hold path
 	GetCurrentDir(buff, FILENAME_MAX);
 	string current_working_dir(buff);
 	return current_working_dir + "\\" + fileName;
 }
+
