@@ -26,9 +26,10 @@ string requestHandler(Recv_headers& msg_headers)
 	//else if (requestType == "HEAD") {
 
 	//}
-	//else if (requestType == "OPTIONS") {
-
-	//}
+	else if (requestType == "OPTIONS") {
+		//TODO: make sure body {}
+		createResponse(RESPONSE_OK, "text/html", "0", "", true);
+	}
 	//else if (requestType == "PUT") {
 
 	//}

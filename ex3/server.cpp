@@ -145,8 +145,8 @@ void main()
 			WSACleanup();
 			return;
 		}
-
-		socketTimeoutHandler(sockets);
+		
+		socketTimeoutHandler();
 
 		for (int i = 0; i < MAX_SOCKETS && nfd > 0; i++)
 		{
@@ -185,7 +185,7 @@ void main()
 
 
 
-void socketTimeoutHandler(SocketState* sockets)
+void socketTimeoutHandler()
 {
 	clock_t cur_time = clock();
 
