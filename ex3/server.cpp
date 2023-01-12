@@ -146,6 +146,8 @@ void main()
 			return;
 		}
 
+		socketTimeoutHandler(sockets);
+
 		for (int i = 0; i < MAX_SOCKETS && nfd > 0; i++)
 		{
 			if (FD_ISSET(sockets[i].id, &waitRecv))
@@ -180,6 +182,28 @@ void main()
 	WSACleanup();
 }
 
+
+
+
+void socketTimeoutHandler(SocketState* sockets)
+{
+	clock_t cur_time = clock();
+
+	for (int i = 1; i < MAX_SOCKETS; i++)
+	{
+		float time_of_last_sec = sockets[i].time_of_last_byte / CLOCKS_PER_SEC;
+		float cur_time_sec = cur_time / CLOCKS_PER_SEC;
+
+		if (((cur_time_sec - time_of_last_sec) > SOCKER_TIMEOUT) && sockets[i].time_of_last_byte > 0)
+		{
+			printf("Socket %d Closed\n", sockets[i].id);
+			sockets[i].time_of_last_byte = 0;
+			sockets[i].id = 0;
+			removeSocket(i);
+			closesocket(sockets[i].id);
+		}
+	}
+}
 bool addSocket(SOCKET id, int what)
 {
 	for (int i = 0; i < MAX_SOCKETS; i++)
@@ -261,13 +285,13 @@ int recvResHanler(int bytesRecv, int iter, bool& socket_not_empty, SOCKET& msgSo
 
 int recvExpandedHelper(int ind)
 {
-	SocketState* socketToReadFrom = sockets + ind;
-	SOCKET msgSocket = socketToReadFrom->id;
+	SocketState* cur_socket = sockets + ind;
+	SOCKET msgSocket = cur_socket->id;
 
 	int bytesRecv = 0, bytes_sum = 0, iter = 0;;
 	unsigned int cur_buf_size = BUFFER_SIZE;
 
-	char* buffer = socketToReadFrom->buffer;
+	char* buffer = cur_socket->buffer;
 	char* temp = nullptr;
 
 	bool socket_not_empty = true;
@@ -299,7 +323,8 @@ int recvExpandedHelper(int ind)
 	memcpy(temp, buffer, bytes_sum);
 	temp[bytes_sum] = '\0';
 	buffer = temp;
-	socketToReadFrom->len = bytes_sum;
+	cur_socket->len = bytes_sum;
+	cur_socket->time_of_last_byte = 0;
 	return 1;
 }
 
@@ -373,7 +398,6 @@ void receiveMessage(int ind)
 	}
 	return;
 }
-
 
 
 
