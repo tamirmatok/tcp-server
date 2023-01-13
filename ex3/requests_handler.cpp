@@ -111,3 +111,63 @@ string get_full_path(string fileName) {
 	string current_working_dir(buff);
 	return current_working_dir + "\\" + fileName;
 }
+
+string createFile(string filename, string body, string language)
+{
+	FILE* fp;
+	string response = 0;
+	//string full_file_name(filename);
+
+	if (!language.empty())
+	{
+		full_file_name.resize(full_file_name.find("."));
+		full_file_name.append("-").append(language).append(".txt");
+		fp = fopen(full_file_name.c_str(), "r+");
+	}
+	else
+		fp = fopen(full_file_name.c_str(), "r+");
+
+	if (fp == nullptr)
+	{
+		status = Created;
+		fp = fopen(full_file_name.data(), "w");
+		if (fp == nullptr)
+			return Not_found;
+		fprintf(fp, "%s", body.data());
+		fclose(fp);
+	}
+	else
+	{ //the file is already exist
+		status = Ok;
+		fprintf(fp, "%s", body.data());
+	}
+
+	return status;
+}
+
+string handlePutRequest(int socket)
+{
+	int status;
+	string response;
+	//Functionality
+	status = createFile(sockets.headers.file_name, sockets.headers.body, sockets.headers.language);
+	//Response message
+	if (status == Ok || status == Created)
+	{
+		Commonheaders(response, status, sockets, false);
+		response.append("Content-Location: ")
+			.append(GetCurrDir(sockets.headers.file_name))
+			.append("\r\n")
+			.append("Content-Type: ")
+			.append(sockets.headers.Content_Type)
+			.append(";charset = utf - 8\r\n")
+			.append("\r\n");
+		return response;
+	}
+	else
+	{
+		Commonheaders(response, status, sockets, false);
+		response.append("\r\n");
+		return response;
+	}
+}
