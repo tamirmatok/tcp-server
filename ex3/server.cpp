@@ -1,4 +1,5 @@
 #include "server.h"
+#include "requests_handler.h"
 
 const int SERVER_PORT = 27015;
 const string SERVER_PORT_STR = "27015";
@@ -329,43 +330,6 @@ int recvExpandedHelper(int ind)
 }
 
 
-
-void getHeadersHelper(Recv_headers& headers, char* msg_received)
-{
-	string buffer(msg_received);
-
-	size_t accept = buffer.find("Accept:") + 7; //saves location after the 'accept:'
-	headers.accept = strtok(&msg_received[accept], " \r\n");
-
-	size_t host = buffer.find("Host:") + 5;
-	headers.host = strtok(&msg_received[host], " \r\n");
-
-	size_t connection = buffer.find("Connection:") + 11;
-	headers.connection = strtok(&msg_received[connection], " \r\n");
-
-	size_t content_Type = buffer.find("Content-Type:");
-	if (content_Type != string::npos) { headers.Content_Type = strtok(&msg_received[content_Type + 13], " \r\n"); }
-	else { headers.Content_Type = "text"; }
-
-	//TODO:test res for content_len with real req.
-	size_t content_len = buffer.find("Content-Length:") + 15;
-	headers.content_len = strtok(&msg_received[content_len], " \r\n");
-
-	size_t body = buffer.find(string("\r\n\r\n")) + 4;
-	headers.body.assign(&msg_received[body]);
-
-	size_t language = buffer.find("?lang=");
-	if (language != string::npos) { headers.language = strtok(&msg_received[language + 6], " \r\n"); }
-	else { headers.language.clear(); }
-
-	size_t file_id = buffer.find(SERVER_PORT_STR + "/ ");
-	if (file_id != string::npos) { headers.file_name.clear(); }
-	else {
-		size_t file_id = buffer.find(SERVER_PORT_STR + "/");
-		headers.file_name = strtok(&msg_received[file_id + SERVER_PORT_STR.length() + 1], " ?\r\n");
-	}
-}
-
 Recv_headers getHeaders(char* msg_received)
 {
 	Recv_headers headers;
@@ -404,7 +368,7 @@ void receiveMessage(int ind)
 void sendMessage(int index)
 {
 	int bytesSent = 0;
-	char sendBuff[255];
+	char sendBuff[1000];
 	string response;
 
 	SOCKET msgSocket = sockets[index].id;
@@ -412,7 +376,7 @@ void sendMessage(int index)
 	// Answer client's request according to request method.
 	response = requestHandler(sockets[index].headers);
 	copy(response.begin(), response.end(), sendBuff);
-	
+	sendBuff[response.length()] = '\0';
 
 	//send message
 	bytesSent = send(msgSocket, sendBuff, (int)strlen(sendBuff), 0);
@@ -424,5 +388,5 @@ void sendMessage(int index)
 
 	cout << "Server: Sent: " << bytesSent << "\\" << strlen(sendBuff) << " bytes of \"" << sendBuff << "\" message.\n";
 
-	sockets[index].send = IDLE;
+	sockets[index].send = IDLE;  
 }
