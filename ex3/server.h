@@ -60,3 +60,4 @@ void removeSocket(int index);
 void acceptConnection(int index);
 void receiveMessage(int index);
 void sendMessage(int index);
+void socketTimeoutHandler();

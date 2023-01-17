@@ -1,4 +1,5 @@
 #include "server.h"
+#include "requests_handler.h"
 
 const int SERVER_PORT = 27015;
 const string SERVER_PORT_STR = "27015";
@@ -145,8 +146,8 @@ void main()
 			WSACleanup();
 			return;
 		}
-
-		socketTimeoutHandler(sockets);
+		
+		socketTimeoutHandler();
 
 		for (int i = 0; i < MAX_SOCKETS && nfd > 0; i++)
 		{
@@ -182,10 +183,7 @@ void main()
 	WSACleanup();
 }
 
-
-
-
-void socketTimeoutHandler(SocketState* sockets)
+void socketTimeoutHandler()
 {
 	clock_t cur_time = clock();
 
@@ -204,6 +202,7 @@ void socketTimeoutHandler(SocketState* sockets)
 		}
 	}
 }
+
 bool addSocket(SOCKET id, int what)
 {
 	for (int i = 0; i < MAX_SOCKETS; i++)
@@ -282,7 +281,6 @@ int recvResHanler(int bytesRecv, int iter, bool& socket_not_empty, SOCKET& msgSo
 	return res;
 }
 
-
 int recvExpandedHelper(int ind)
 {
 	SocketState* cur_socket = sockets + ind;
@@ -328,8 +326,6 @@ int recvExpandedHelper(int ind)
 	return 1;
 }
 
-
-
 void getHeadersHelper(Recv_headers& headers, char* msg_received)
 {
 	string buffer(msg_received);
@@ -358,11 +354,10 @@ void getHeadersHelper(Recv_headers& headers, char* msg_received)
 	if (language != string::npos) { headers.language = strtok(&msg_received[language + 6], " \r\n"); }
 	else { headers.language.clear(); }
 
-	size_t file_id = buffer.find(SERVER_PORT_STR + "/ ");
-	if (file_id != string::npos) { headers.file_name.clear(); }
+	size_t file_id = buffer.find("?fileName=");
+	if (file_id != string::npos) { headers.file_name = strtok(&msg_received[file_id + 10], "\r\n"); }
 	else {
-		size_t file_id = buffer.find(SERVER_PORT_STR + "/");
-		headers.file_name = strtok(&msg_received[file_id + SERVER_PORT_STR.length() + 1], " ?\r\n");
+		headers.file_name.clear();
 	}
 }
 
@@ -376,7 +371,6 @@ Recv_headers getHeaders(char* msg_received)
 	char* token = strtok(msg_copy, "- ");
 	headers.type = token;
 	token = strtok(NULL, "- ");
-	//TODO:test res for URL with real req.
 	headers.URL = token;
 	headers.raw_msg = msg_received;
 
@@ -399,12 +393,10 @@ void receiveMessage(int ind)
 	return;
 }
 
-
-
 void sendMessage(int index)
 {
 	int bytesSent = 0;
-	char sendBuff[255];
+	char sendBuff[1000];
 	string response;
 
 	SOCKET msgSocket = sockets[index].id;
@@ -412,7 +404,7 @@ void sendMessage(int index)
 	// Answer client's request according to request method.
 	response = requestHandler(sockets[index].headers);
 	copy(response.begin(), response.end(), sendBuff);
-	
+	sendBuff[response.length()] = '\0';
 
 	//send message
 	bytesSent = send(msgSocket, sendBuff, (int)strlen(sendBuff), 0);
@@ -422,7 +414,7 @@ void sendMessage(int index)
 		return;
 	}
 
-	cout << "Server: Sent: " << bytesSent << "\\" << strlen(sendBuff) << " bytes of \"" << sendBuff << "\" message.\n";
+	cout << "Server: Sent: " << bytesSent << "\\" << strlen(sendBuff) << " bytes of \" " << sendBuff << "\" message.\n";
 
-	sockets[index].send = IDLE;
+	sockets[index].send = IDLE;  
 }
